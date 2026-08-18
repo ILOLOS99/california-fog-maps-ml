@@ -9,12 +9,14 @@ Iowa Environmental Mesonet (IEM), 2025: ASOS Surface Weather Observations. Iowa 
 
 ## Files
 
-- `ca_az_hourly_2019.csv`
-- `ca_az_hourly_2020.csv`
-- `ca_az_hourly_2021.csv`
-- `ca_az_hourly_2022.csv`
-- `ca_az_hourly_2023.csv`
-- `ca_az_hourly_2024.csv`
+The annual hourly datasets are provided as compressed ZIP archives. Each archive contains one CSV file for the corresponding year.
+
+- `ca_az_hourly_2019.zip`
+- `ca_az_hourly_2020.zip`
+- `ca_az_hourly_2021.zip`
+- `ca_az_hourly_2022.zip`
+- `ca_az_hourly_2023.zip`
+- `ca_az_hourly_2024.zip`
 
 ## Variables
 
