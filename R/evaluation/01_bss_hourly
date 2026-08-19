@@ -1,0 +1,210 @@
+# BSS - 2024 EVALUATION
+# Baseline: ±10 day circular window climatology from 2019-2023
+
+library(dplyr)
+library(data.table)
+
+# CONFIG
+in_file    <- "data/combined_stations_era5_CA_2019_2024_features.csv"
+output_dir <- "outputs/bss"
+
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+WINDOW       <- 10L
+MIN_YEARS    <- 3L
+MIN_COMPLETE <- 0.90
+
+# LOAD DATA 
+cat("Loading data...\n")
+dt <- fread(in_file)
+dt <- dt[has_fog_mist_data == TRUE]
+dt[, fog_label := as.integer(fog_occurrence == "yes" | mist_occurrence == "yes")]
+dt[, doy := as.integer(format(as.Date(paste(year_local, month_local, day_local, sep = "-")), "%j"))]
+
+# LOAD SPLITS 
+rf_splits  <- readRDS("R/evaluation/station_splits_random_forest.rds")
+xgb_splits <- readRDS("R/evaluation/station_splits_xgboost.rds")
+lgb_splits <- readRDS("R/evaluation/station_splits_lightgbm.rds")
+
+eval_stations <- unique(c(lgb_splits$test, xgb_splits$test, rf_splits$test))
+
+# IDENTIFY VALID BASELINE STATIONS 
+cat("Checking baseline data quality...\n")
+
+station_year_completeness <- dt[year_local %in% 2019:2023, .(
+  n_hours        = .N,
+  expected_hours = ifelse(first(year_local) %% 4 == 0, 8784L, 8760L)
+), by = .(station, year_local)][, completeness := n_hours / expected_hours]
+
+valid_baseline <- station_year_completeness[
+  completeness >= MIN_COMPLETE,
+  .(valid_years = .N, years_list = paste(year_local, collapse = ", ")),
+  by = station
+][valid_years >= MIN_YEARS]
+
+valid_stations <- intersect(eval_stations, valid_baseline$station)
+excluded       <- setdiff(eval_stations, valid_stations)
+
+cat(sprintf("Valid eval stations (>= %d baseline years): %d\n", MIN_YEARS, length(valid_stations)))
+cat(sprintf("Excluded (insufficient baseline): %s\n", paste(excluded, collapse = ", ")))
+
+# BUILD CLIMATOLOGICAL SURFACE
+cat("\nBuilding climatological surface...\n")
+
+valid_year_lookup <- station_year_completeness[
+  completeness >= MIN_COMPLETE & station %in% valid_stations,
+  .(station, year_local)
+]
+
+baseline_obs <- dt[
+  year_local %in% 2019:2023 & station %in% valid_stations,
+  .(station, year_local, doy, hour_local, fog_label)
+][valid_year_lookup, on = .(station, year_local), nomatch = 0]
+
+# Add year length for correct circular wrapping
+baseline_obs[, year_days := ifelse(year_local %% 4 == 0, 366L, 365L)]
+
+# Extend for circular wrapping using each year's actual length
+baseline_ext <- rbindlist(list(
+  baseline_obs[, .(station, hour_local, doy = doy,             fog_label)],
+  baseline_obs[, .(station, hour_local, doy = doy - year_days, fog_label)],
+  baseline_obs[, .(station, hour_local, doy = doy + year_days, fog_label)]
+))
+setkey(baseline_ext, station, hour_local, doy)
+
+cat("Processing stations:\n")
+clim_list <- vector("list", length(valid_stations))
+
+for (i in seq_along(valid_stations)) {
+  st     <- valid_stations[i]
+  st_ext <- baseline_ext[station == st, .(hour_local, doy, fog_label)]
+  setkey(st_ext, hour_local, doy)
+  
+  tgt <- CJ(hour_local = 0:23L, doy = 1:366L)
+  tgt[, doy_lo := doy - WINDOW]
+  tgt[, doy_hi := doy + WINDOW]
+  
+  res <- st_ext[
+    tgt,
+    .(clim_prob = mean(fog_label, na.rm = TRUE), n_obs = .N),
+    on  = .(hour_local, doy >= doy_lo, doy <= doy_hi),
+    by  = .EACHI
+  ]
+  
+  clim_list[[i]] <- data.table(
+    station    = st,
+    hour_local = tgt$hour_local,
+    doy        = tgt$doy,
+    clim_prob  = res$clim_prob,
+    n_obs      = res$n_obs
+  )
+  
+  cat(sprintf("  [%d/%d] %s\n", i, length(valid_stations), st))
+}
+
+clim_surface <- rbindlist(clim_list)
+cat(sprintf("Climatological surface built: %d cells\n", nrow(clim_surface)))
+
+na_cells <- sum(is.na(clim_surface$clim_prob))
+cat(sprintf("Cells with NA climatology: %d (%.2f%%)\n",
+            na_cells, 100 * na_cells / nrow(clim_surface)))
+
+# CHECK 2024 COMPLETENESS
+cat("\nChecking 2024 data completeness...\n")
+
+completeness_2024 <- dt[year_local == 2024, .(
+  n_hours      = .N,
+  completeness = .N / 8784L
+), by = station][completeness >= MIN_COMPLETE]
+
+valid_2024_stations <- intersect(valid_stations, completeness_2024$station)
+cat(sprintf("Eval stations with valid 2024 data: %d\n", length(valid_2024_stations)))
+cat(sprintf("Excluded (insufficient 2024 data): %s\n",
+            paste(setdiff(valid_stations, valid_2024_stations), collapse = ", ")))
+
+# BSS HELPER
+brier_score <- function(obs, pred) mean((pred - obs)^2, na.rm = TRUE)
+
+# PROCESS MODELS 
+models_info <- list(
+  LightGBM = list(
+    splits    = lgb_splits,
+    test_file = "R/evaluation/test_predictions_lightgbm.rds",
+    pred_col  = "pred_prob_fog_mist",
+    obs_col   = "obs_fog_mist"
+  ),
+  XGBoost = list(
+    splits    = xgb_splits,
+    test_file = "R/evaluation/test_predictions_xgboost.rds",
+    pred_col  = "pred_prob_fogmist",
+    obs_col   = "obs_fogmist"
+  ),
+  RandomForest = list(
+    splits    = rf_splits,
+    test_file = "R/evaluation/test_predictions_random_forest.rds",
+    pred_col  = "pred_prob_fog_mist",
+    obs_col   = "obs_fog_mist"
+  )
+)
+
+all_results <- list()
+
+for (model_name in names(models_info)) {
+  cat(sprintf("\n=== Processing %s ===\n", model_name))
+  
+  info <- models_info[[model_name]]
+  
+  preds_24 <- as.data.table(readRDS(info$test_file))
+  preds_24 <- preds_24[year_local == 2024]
+  preds_24[, split_type := "Test"]
+  
+  preds_24 <- preds_24[station %in% valid_2024_stations]
+  
+  preds_24[, doy := as.integer(format(
+    as.Date(paste(year_local, month_local, day_local, sep = "-")), "%j"
+  ))]
+  
+  # Join climatological probabilities
+  preds_24 <- clim_surface[preds_24, on = .(station, hour_local, doy), nomatch = 0]
+  
+  station_results <- list()
+  
+  for (st in valid_2024_stations) {
+    st_data <- preds_24[station == st]
+    if (nrow(st_data) == 0) next
+    
+    split_type <- unique(st_data$split_type)[1]
+    obs        <- st_data[[info$obs_col]]
+    pred       <- st_data[[info$pred_col]]
+    clim       <- st_data$clim_prob
+    
+    ok          <- !is.na(clim)
+    bs_model    <- brier_score(obs[ok], pred[ok])
+    bs_clim     <- brier_score(obs[ok], clim[ok])
+    bss_overall <- 1 - (bs_model / bs_clim)
+    
+    station_results[[st]] <- data.table(
+      model       = model_name,
+      station     = st,
+      split       = split_type,
+      latitude    = dt[station == st, first(latitude)],
+      longitude   = dt[station == st, first(longitude)],
+      n_hours     = sum(ok),
+      bs_model    = bs_model,
+      bs_clim     = bs_clim,
+      bss_overall = bss_overall
+    )
+  }
+  
+  model_dt <- rbindlist(station_results)
+  all_results[[model_name]] <- model_dt
+  
+  cat(sprintf("  Test - mean BSS: %.4f  (n=%d stations)\n",
+              mean(model_dt$bss_overall, na.rm = TRUE),
+              nrow(model_dt)))
+}
+
+# SAVE
+final_results <- rbindlist(all_results)
+fwrite(final_results, file.path(output_dir, "bss_diurnal_clim_2024.csv"))
+cat("\nDone. Results saved to:", file.path(output_dir, "bss_diurnal_clim_2024.csv"), "\n")
