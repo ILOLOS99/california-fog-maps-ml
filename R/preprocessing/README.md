@@ -2,6 +2,16 @@
 
 These scripts transform the ASOS and ERA5-Land station-level data into the feature dataset used for training and testing the machine learning models downstream.
 
+## Required Inputs
+
+Before running the preprocessing scripts:
+
+- Extract the six annual ASOS ZIP archives in `data/ASOS/`.
+- Generate the ERA5-Land monthly CSV files using the GEE script in `data/ERA5-Land/`.
+- Place the ERA5-Land monthly CSV files in year-specific subdirectories under `data/ERA5-Land/` (e.g., `data/ERA5-Land/2019/`).
+- Create a free OpenTopography account and request an API key from the [MyOpenTopo dashboard](https://portal.opentopography.org/login).
+- Enter the API key in `02_prepare_DEM.R` to enable programmatic download of the SRTM 1 Arc-Second Global DEM (~30 m), which is then reprojected to a 30-m California Albers grid (EPSG:3310).
+
 ## Processing Order
 
 Run the scripts in the following order:
@@ -51,16 +61,6 @@ Run the scripts in the following order:
    - Calculates pairwise correlations and hierarchical clustering using `1 - |r|` as the dissimilarity measure.
    - Uses a correlation threshold of `|r| = 0.95` (dissimilarity < 0.05) to identify highly correlated predictor groups.
    - Produces the static and dynamic correlation dendrograms.
-
-## Required Inputs
-
-Before running the preprocessing scripts:
-
-- Extract the six annual ASOS ZIP archives in `data/ASOS/`.
-- Generate the ERA5-Land monthly CSV files using the GEE script in `data/ERA5-Land/`.
-- Place the ERA5-Land monthly CSV files in year-specific subdirectories under `data/ERA5-Land/` (e.g., `data/ERA5-Land/2019/`).
-- Create a free OpenTopography account and request an API key from the [MyOpenTopo dashboard](https://portal.opentopography.org/login).
-- Enter the API key in `02_prepare_DEM.R` to enable programmatic download of the SRTM 1 Arc-Second Global DEM (~30 m), which is then reprojected to a 30-m California Albers grid (EPSG:3310).
 
 ## DEM Data Source
 
