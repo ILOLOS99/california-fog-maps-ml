@@ -22,9 +22,9 @@ dt[, fog_label := as.integer(fog_occurrence == "yes" | mist_occurrence == "yes")
 dt[, doy := as.integer(format(as.Date(paste(year_local, month_local, day_local, sep = "-")), "%j"))]
 
 # LOAD SPLITS 
-rf_splits  <- readRDS("R/evaluation/station_splits_random_forest.rds")
-xgb_splits <- readRDS("R/evaluation/station_splits_xgboost.rds")
-lgb_splits <- readRDS("R/evaluation/station_splits_lightgbm.rds")
+rf_splits  <- readRDS("R/hourly_evaluation/station_splits_random_forest.rds")
+xgb_splits <- readRDS("R/hourly_evaluation/station_splits_xgboost.rds")
+lgb_splits <- readRDS("R/hourly_evaluation/station_splits_lightgbm.rds")
 
 eval_stations <- unique(c(lgb_splits$test, xgb_splits$test, rf_splits$test))
 
