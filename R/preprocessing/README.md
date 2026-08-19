@@ -78,6 +78,6 @@ The final preprocessing dataset is:
 
 `data/combined_stations_era5_CA_2019_2024_features.csv`
 
-This dataset provides the candidate predictors used for machine-learning model development.
+This dataset provides the candidate predictors used for machine learning model development.
 
 The final predictor set is determined using the correlation dendrograms. For feature clusters merging at a dissimilarity below 0.05 (`|r| > 0.95`), one predictor is retained based on physical interpretability and relevance to fog formation.
