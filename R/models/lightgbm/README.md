@@ -26,4 +26,4 @@ The LightGBM model is fitted using Bayesian hyperparameter optimization and spat
 
 Before running `apply_lightgbm.R` on a new machine, confirm the installed version matches:
 
-  packageVersion("lightgbm")
+    packageVersion("lightgbm")
