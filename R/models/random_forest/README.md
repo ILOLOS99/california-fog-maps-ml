@@ -2,7 +2,7 @@
 
 This directory contains the Random Forest training code and reproducibility metadata used for monthly fog frequency mapping in California.
 
-The model predicts hourly fog(including mist) occurrence probabilities, which are subsequently aggregated to monthly frequencies.
+The model predicts hourly fog (including mist) occurrence probabilities, which are subsequently aggregated to monthly frequencies.
 
 ## Files
 
