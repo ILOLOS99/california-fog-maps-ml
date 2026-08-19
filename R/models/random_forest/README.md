@@ -7,7 +7,7 @@ The model predicts hourly fog(including mist) occurrence probabilities, which ar
 ## Files
 
 - `Random_Forest.R` — trains the Random Forest model and generates predictions for held-out stations. Model training is computationally intensive and is intended to be run in a high-performance computing (HPC) environment.
-- `apply_random_forest.R` — example code demonstrating how to load and apply the trained Random Forest model to preprocessed predictor data for a location and time of your choosing.
+- `apply_random_forest.R` — example code demonstrating how to load and apply the trained Random Forest model to preprocessed predictor data for a location and time of your choosing. Importantly, the input data must contain all the predictors listed in `session_summary.rds`.
 - `session_summary.rds` — stores the predictor list and model configuration.
 
 The trained model (`rf_model_final.rds`) is archived on Zenodo because of its file size:
