@@ -7,6 +7,8 @@ summary_file <- "session_summary.rds"
 input_file   <- "data/new_data.csv" # Your data path goes here.
 output_file  <- "outputs/random_forest_predictions.csv"
 
+dir.create("outputs", showWarnings = FALSE, recursive = TRUE)
+
 # LOAD MODEL + MODEL CONFIGURATION
 model   <- readRDS(model_file)
 summary <- readRDS(summary_file)
@@ -27,6 +29,17 @@ if (length(missing_features) > 0) {
 # PREDICT HOURLY FOG/MIST PROBABILITY
 x <- dt[, ..summary$features]
 
+# Drop rows with NA in any feature column
+na_rows <- !complete.cases(x)
+if (any(na_rows)) {
+  cat(sprintf(
+    "Dropping %d of %d rows due to NA in feature columns.\n",
+    sum(na_rows), nrow(dt)
+  ))
+  dt <- dt[!na_rows]
+  x  <- x[!na_rows]
+}
+
 pred <- predict(
   model,
   data = x
@@ -34,7 +47,7 @@ pred <- predict(
 
 dt[, pred_prob_fog_mist := pred]
 
-# MONTHLY AGGREGATION
+# MONTHLY AGGREGATION (ensure at least 90% hourly data completeness for the month)
 monthly_predictions <- dt[
   ,
   .(
