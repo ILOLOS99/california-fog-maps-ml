@@ -1,12 +1,3 @@
-// =========================
-// GEE: ERA5-Land hourly sampling — COMBINED ALL VARIABLES
-// - All ERA5-Land variables in one script
-// - One station per ERA5 pixel (spatial deduplication)
-// - Sampled at native ERA5-Land resolution
-// - Map shows kept stations, removed stations, and ERA5 pixels
-// - California only
-// =========================
-
 // ========== USER SETTINGS ==========
 var stationAssetId = 'projects/YOUR_PROJECT/assets/unique_stations_with_latlon';
 var targetYear     = 2019;
