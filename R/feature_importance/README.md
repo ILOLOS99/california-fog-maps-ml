@@ -10,6 +10,6 @@ This directory contains the scripts used to evaluate feature importance for the 
 
 All analyses use held-out test stations from 2019–2024.
 
-The Random Forest model required by `01_random_forest_shap.R` is archived on Zenodo:
+The Random Forest model required by `random_forest_shap.R` is archived on Zenodo:
 
 **DOI:** https://doi.org/10.5281/zenodo.22016730
