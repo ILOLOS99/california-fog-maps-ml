@@ -13,7 +13,7 @@ The ERA5-Land data are not stored directly in this repository. They can be repro
 
 ERA5-Land hourly data were accessed through the Google Earth Engine collection `ECMWF/ERA5_LAND/HOURLY`. The underlying ERA5-Land dataset is produced by the European Centre for Medium-Range Weather Forecasts (ECMWF) and distributed through the Copernicus Climate Change Service (C3S) Climate Data Store (CDS).
 
-## Citation
+## Citations
 
 Muñoz-Sabater, J. (2019). *ERA5-Land hourly data from 1950 to present*. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). https://doi.org/10.24381/cds.e2161bac
 
