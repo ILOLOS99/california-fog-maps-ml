@@ -1,0 +1,319 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.ticker as mticker
+from matplotlib.colors import TwoSlopeNorm
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import cartopy.io.img_tiles as cimgt
+import math
+from matplotlib.patches import Circle
+
+
+model_files = {
+    "LightGBM":      "LightGBM_with_coords.csv",
+    "XGBoost":       "XGBoost_with_coords.csv",
+    "Random Forest": "Random Forest_Fixed Hyperparameters_with_coords.csv",
+}
+MODEL_COLORS = {
+    "LightGBM":      "#378ADD",
+    "XGBoost":       "#D85A30",
+    "Random Forest": "#1D9E75",
+}
+MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun",
+                "Jul","Aug","Sep","Oct","Nov","Dec"]
+MONTHS = list(range(1, 13))
+MODELS = ["LightGBM", "XGBoost", "Random Forest"]
+N_MODELS = len(MODELS)
+
+LON_MIN, LON_MAX = -125.0, -113.5
+LAT_MIN, LAT_MAX =   32.0,   42.5
+PROJ = ccrs.PlateCarree()
+
+class ESRIShadedRelief(cimgt.GoogleWTS):
+    def _image_url(self, tile):
+        x, y, z = tile
+        return (
+            f"https://services.arcgisonline.com/ArcGIS/rest/services/"
+            f"World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}"
+        )
+
+TOPO_TILER = ESRIShadedRelief()
+TOPO_ZOOM  = 9
+
+# LOAD
+all_dfs = []
+for model_name, filename in model_files.items():
+    df = pd.read_csv(filename)
+    df["model"]   = model_name
+    df["residual"] = df["pred_freq"] - df["obs_freq"]
+    all_dfs.append(df)
+
+data  = pd.concat(all_dfs, ignore_index=True)
+years = sorted(data["year_local"].dropna().unique().astype(int))
+print(f"Loaded {len(data)} rows | Years: {years}")
+
+
+# FIGURES 5 & S7-S11 — Monthly prediction residual boxplots (one figure per year)
+BOX_W  = 0.28
+
+GLOBAL_Y = np.ceil(np.percentile(np.abs(data["residual"].dropna().values), 97) * 40) / 40
+
+FIGURE_LABELS = {
+        2019: "S7",
+        2020: "S8",
+        2021: "S9",
+        2022: "S10",
+        2023: "S11",
+        2024: "5",
+    }
+
+for yr in years:
+    yr_data = data[data["year_local"] == yr]
+
+    fig, axes = plt.subplots(
+        N_MODELS, 1,
+        figsize=(13, 5 * N_MODELS),
+        gridspec_kw={"hspace": 0.60}
+    )
+    fig.patch.set_facecolor("#FAFAF8")
+    fig.suptitle(f"Prediction Residual Distribution per Month — {yr}",
+                 fontsize=20, fontweight="bold", color="#1A1A1A", y=1.04)
+
+    for mi, model in enumerate(MODELS):
+        ax    = axes[mi]
+        color = MODEL_COLORS[model]
+        sub_m = yr_data[yr_data["model"] == model]
+
+        ax.set_facecolor("#FAFAF8")
+        ax.axhline(0, color="#333333", linewidth=0.9,
+                   linestyle="-", alpha=0.55, zorder=1)
+        ax.axhspan(0,         GLOBAL_Y, color="#FAEEDA", alpha=0.18,
+                   linewidth=0, zorder=0)
+        ax.axhspan(-GLOBAL_Y, 0,        color="#E1F5EE", alpha=0.18,
+                   linewidth=0, zorder=0)
+        ax.grid(axis="y", linewidth=0.4, color="#CCCCCC", alpha=0.6, zorder=0)
+
+        for mo in MONTHS:
+            vals = sub_m.loc[sub_m["month_local"] == mo, "residual"].dropna().values
+            if len(vals) == 0:
+                continue
+
+            bp = ax.boxplot(
+                vals,
+                positions=[mo],
+                widths=BOX_W,
+                patch_artist=True,
+                showfliers=True,
+                flierprops=dict(
+                    marker="o", markersize=2.2,
+                    markerfacecolor=color,
+                    markeredgewidth=0, alpha=0.35
+                ),
+                medianprops=dict(color="white", linewidth=1.8),
+                whiskerprops=dict(linewidth=0.7, color="#5F5E5A"),
+                capprops=dict(linewidth=0.7, color="#5F5E5A"),
+                boxprops=dict(linewidth=0)
+            )
+            for patch in bp["boxes"]:
+                patch.set_facecolor(color)
+                patch.set_alpha(0.82)
+
+        ax.set_xlim(0.5, 12.5)
+        ax.set_ylim(-GLOBAL_Y, GLOBAL_Y)
+        ax.set_xticks(MONTHS)
+        xtick_labels = [
+            f"{MONTH_LABELS[mo-1]}\n"
+            f"(n={sub_m[sub_m['month_local']==mo]['residual'].dropna().__len__()})"
+            for mo in MONTHS
+        ]
+        ax.set_xticklabels(xtick_labels, fontsize=12)
+        ax.set_ylabel("Prediction residuals", fontsize=14)
+        ax.set_title(model, fontsize=18, fontweight="600",
+                     pad=8, color=color)
+        ax.tick_params(axis="y", labelsize=12)
+        for sp in ax.spines.values():
+            sp.set_linewidth(0.5)
+            sp.set_color("#CCCCCC")
+        ax.spines[["top", "right"]].set_visible(False)
+
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.97, bottom=0.08)
+
+    fig_label = FIGURE_LABELS[yr]
+    out_file = f"figure_{fig_label}.png"
+
+    fig.savefig(
+        out_file,
+        dpi=300,
+        bbox_inches="tight",
+        facecolor=fig.get_facecolor()
+    )
+
+    plt.show()
+    plt.close()
+
+    print(f"✓ Saved: {out_file}")
+
+
+# FIGURE S12 — Spatial map of prediction residuals 
+
+def setup_map(ax, col_i, row_i, n_rows):
+    ax.set_extent([LON_MIN, LON_MAX, LAT_MIN, LAT_MAX], crs=PROJ)
+    ax.add_image(TOPO_TILER, TOPO_ZOOM, zorder=0)
+    ax.add_feature(cfeature.OCEAN,     facecolor="#C8DCF0", zorder=1)
+    ax.add_feature(cfeature.LAKES,     facecolor="#C8DCF0", zorder=1, alpha=0.8)
+    ax.add_feature(cfeature.STATES,    linewidth=0.6, edgecolor="#333333", zorder=2)
+    ax.add_feature(cfeature.COASTLINE, linewidth=0.8, edgecolor="#111111", zorder=3)
+    ax.add_feature(cfeature.BORDERS,   linewidth=0.8, edgecolor="#111111", zorder=3)
+
+    gl = ax.gridlines(draw_labels=False, linewidth=0.3,
+                      color="white", linestyle=":", alpha=0.6, zorder=4)
+    gl.xlocator = mticker.FixedLocator(range(-124, -113, 2))
+    gl.ylocator = mticker.FixedLocator(range(32, 43, 2))
+
+    if col_i == 0 or row_i == n_rows - 1:
+        gl2 = ax.gridlines(draw_labels=True, linewidth=0,
+                           color="none", zorder=4)
+        gl2.xlocator      = mticker.FixedLocator(range(-124, -113, 4))
+        gl2.ylocator      = mticker.FixedLocator(range(32, 43, 4))
+        gl2.top_labels    = False
+        gl2.right_labels  = False
+        gl2.left_labels   = (col_i == 0)
+        gl2.bottom_labels = (row_i == n_rows - 1)
+        gl2.xlabel_style  = {"size": 12, "color": "#222222"}
+        gl2.ylabel_style  = {"size": 12, "color": "#222222"}
+
+
+records_pct = []
+for model in MODELS:
+    sub_m = data[data["model"] == model]
+    for (lat, lon), grp in sub_m.groupby(["latitude", "longitude"]):
+        vals = grp["residual"].dropna().values
+        if len(vals) == 0:
+            q1, med, q3 = np.nan, np.nan, np.nan
+        else:
+            q1  = np.percentile(vals, 25)
+            med = np.percentile(vals, 50)
+            q3  = np.percentile(vals, 75)
+        records_pct.append({
+            "model":     model,
+            "latitude":  lat,
+            "longitude": lon,
+            "q1":  q1,
+            "med": med,
+            "q3":  q3,
+        })
+
+station_pct = pd.DataFrame(records_pct)
+
+all_q_vals = np.concatenate([
+    station_pct["q1"].dropna().values,
+    station_pct["q3"].dropna().values,
+])
+abs_cap = 0.1
+print(f"Glyph colorscale cap: ±{abs_cap:.3f}")
+
+CMAP_DIV = plt.cm.RdBu_r
+NORM_DIV = TwoSlopeNorm(vcenter=0, vmin=-abs_cap, vmax=abs_cap)
+
+S_OUTER = 280
+S_MID   = 130
+S_INNER =  45
+
+n_rows = len(MODELS)
+
+fig2, axes2 = plt.subplots(
+    n_rows, 1,
+    figsize=(6, 13),
+    subplot_kw={"projection": PROJ},
+    gridspec_kw={"hspace": 0.12}
+)
+fig2.patch.set_facecolor("#E8E8E6")
+plt.subplots_adjust(left=0.13, right=0.97, top=0.91, bottom=0.20)
+
+fig2.text(0.55, 0.945,
+          "Prediction Residual Distribution per Station",
+          ha="center", va="center",
+          fontsize=18, fontweight="bold", color="#1A1A1A")
+
+for row_i, model in enumerate(MODELS):
+    ax  = axes2[row_i]
+    setup_map(ax, 0, row_i, n_rows)
+
+    sub  = station_pct[station_pct["model"] == model]
+    lons = sub["longitude"].values
+    lats = sub["latitude"].values
+
+    for vals, s, lw in [
+        (sub["q3"].values,  S_OUTER, 0.25),
+        (sub["med"].values, S_MID,   0.25),
+        (sub["q1"].values,  S_INNER, 0.25),
+    ]:
+        ax.scatter(
+            lons, lats,
+            c=vals,
+            cmap=CMAP_DIV, norm=NORM_DIV,
+            s=s, alpha=0.92,
+            linewidths=lw,
+            edgecolors="#333333",
+            transform=PROJ, zorder=5
+        )
+
+    ax.text(-0.28, 0.5, model,
+            transform=ax.transAxes,
+            fontsize=15, fontweight="600", rotation=90,
+            va="center", ha="center", color="#1A1A1A")
+
+# Colorbar 
+cbar_ax = fig2.add_axes([0.13, 0.13, 0.74, 0.025])
+sm = cm.ScalarMappable(cmap=CMAP_DIV, norm=NORM_DIV)
+sm.set_array([])
+tick_vals = np.linspace(-abs_cap, abs_cap, 5)
+cbar = fig2.colorbar(sm, cax=cbar_ax, orientation="horizontal",
+                     ticks=tick_vals, extend="both")
+cbar.set_label("Prediction residual", fontsize=14, labelpad=8)
+cbar.ax.tick_params(labelsize=11)
+cbar.ax.set_xticklabels([f"{v:+.3f}" for v in tick_vals], fontsize=11)
+
+# Glyph legend 
+legend_ax = fig2.add_axes([0.20, 0.00, 0.60, 0.09])
+legend_ax.set_aspect("equal")
+legend_ax.axis("off")
+legend_ax.set_xlim(-1.2, 5.5)
+legend_ax.set_ylim(-1.6, 1.6)
+
+R_OUTER, R_MID, R_INNER = 0.70, 0.48, 0.26
+cx, cy = 0.0, 0.0
+
+for r, alpha in [(R_OUTER, 0.30), (R_MID, 0.55), (R_INNER, 0.85)]:
+    circ = Circle((cx, cy), r,
+                  facecolor="#888888", alpha=alpha,
+                  edgecolor="#444444", linewidth=0.8, zorder=5)
+    legend_ax.add_patch(circ)
+
+for r, angle_deg, label, lx, ly in [
+    (R_OUTER,  50, "Outer ring = 75th percentile", 1.9,  0.85),
+    (R_MID,     5, "Middle ring = Median",          1.9,  0.05),
+    (R_INNER, -50, "Inner dot  = 25th percentile",  1.9, -0.75),
+]:
+    angle_rad = math.radians(angle_deg)
+    x0 = cx + r * math.cos(angle_rad)
+    y0 = cy + r * math.sin(angle_rad)
+    legend_ax.plot([x0, lx - 0.10], [y0, ly],
+                   color="#666666", lw=0.9, zorder=4, solid_capstyle="round")
+    legend_ax.text(lx, ly, label,
+                   ha="left", va="center", fontsize=9, color="#1A1A1A")
+
+fig2.savefig(
+    "figure_S12.png",
+    dpi=300,
+    bbox_inches="tight",
+    facecolor=fig2.get_facecolor()
+)
+
+plt.show()
+plt.close()
+
+print("✓ Saved: figure_S12.png")
