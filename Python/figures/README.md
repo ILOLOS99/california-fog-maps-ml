@@ -10,6 +10,7 @@ This directory contains Python scripts used to generate figures for the manuscri
 - `04_station_error_maps.py` — generates station-level maps of model errors and predictions for station-months with zero observed fog frequency.
 - `05_s7-s12_monthly_bias.py` — generates Figure 5 and Supplementary Figures S7–S12, showing monthly prediction residuals for 2019–2024 and their spatial distributions.
 - `07_SHAP_comparison.py` — generates Figure 7 comparing SHAP-based feature importance across LightGBM, XGBoost, and Random Forest.
+- `08_s24_dewpoint_depression_SHAP.py` — generates Figure 8 and Supplementary Figure S24, showing the relationship between dewpoint depression and SHAP values for LightGBM and XGBoost, respectively.
 
 Figures 1 and 2 use the processed feature dataset archived on Zenodo:
 
@@ -22,3 +23,8 @@ Figure 7 uses the included model-specific SHAP importance CSV files. These are r
 - LightGBM: `importance_shap_by_class_test.csv` → `LightGBM_SHAP_Absolute_Values.csv`
 - XGBoost: `importance_shap_by_class_test.csv` → `XGBoost_SHAP_Absolute_Values.csv`
 - Random Forest: `importance_global.csv` → `Random Forest_SHAP_importance.csv`
+
+Figure 8 and Supplementary Figure S24 use the included dewpoint-depression SHAP CSV files. These are renamed copies of outputs produced by the corresponding feature-importance analyses; the underlying values were not modified:
+
+- LightGBM: `dewpoint_dep_beeswarm_test.csv` → `LightGBM_dewpoint_dep_beeswarm.csv`
+- XGBoost: `dewpoint_dep_beeswarm_test.csv` → `XGBoost_dewpoint_dep_beeswarm.csv`
