@@ -17,4 +17,8 @@ Figures 1 and 2 use the processed feature dataset archived on Zenodo:
 
 Figures 3–5 and S7–S12 use the included model-specific monthly prediction CSV files. These are derived from the corresponding `monthly_all_years.csv` model outputs, with station coordinates added.
 
-Figure 7 uses the included model-specific SHAP importance CSV files. These correspond to outputs from the feature-importance analyses in `R/feature_importance/` and were renamed for use by the figure-generation script; the underlying values were not modified.
+Figure 7 uses the included model-specific SHAP importance CSV files. These are renamed copies of outputs produced by the feature-importance analyses in `R/feature_importance/`; the underlying values were not modified:
+
+- LightGBM: `importance_shap_by_class_test.csv` → `LightGBM_SHAP_Absolute_Values.csv`
+- XGBoost: `importance_shap_by_class_test.csv` → `XGBoost_SHAP_Absolute_Values.csv`
+- Random Forest: `importance_global.csv` → `Random Forest_SHAP_importance.csv`
