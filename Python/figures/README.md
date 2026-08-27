@@ -14,12 +14,13 @@ This directory contains Python scripts used to generate figures for the manuscri
 - `s1-s6_monthly_error_distributions.py` — generates Supplementary Figures S1–S6, showing station-level ARE and predicted fog frequency by month for 2019–2024.
 - `s13_spearman_rho_monthly.py` — generates Supplementary Figure S13, showing monthly Spearman’s ρ between observed and predicted fog frequency for LightGBM, XGBoost, and Random Forest.
 - `s14-s19_station_year_spearman_rho.py` — generates Supplementary Figures S14–S19, mapping station-level Spearman’s ρ between observed and predicted monthly fog frequency for 2019–2024.
+- `s20_directional_accuracy_map.py` — generates Supplementary Figure S20, showing station- and month-level year-to-year directional accuracy of predicted fog frequency across the three models.
 
 Figures 1 and 2 use the processed feature dataset archived on Zenodo:
 
 **DOI:** https://doi.org/10.5281/zenodo.22050395
 
-Figures 3–5 and Supplementary Figures S1–S19 use the included model-specific monthly prediction CSV files. These are derived from the corresponding `monthly_all_years.csv` outputs from the model evaluation workflows, with station latitude and longitude added; the underlying prediction and observation values were not modified:
+Figures 3–5 and Supplementary Figures S1–S20 use the included model-specific monthly prediction CSV files. These are derived from the corresponding `monthly_all_years.csv` outputs from the model evaluation workflows, with station latitude and longitude added; the underlying prediction and observation values were not modified:
 
 - LightGBM: `monthly_all_years.csv` → `LightGBM_with_coords.csv`
 - XGBoost: `monthly_all_years.csv` → `XGBoost_with_coords.csv`
