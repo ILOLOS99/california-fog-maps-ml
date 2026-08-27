@@ -12,12 +12,13 @@ This directory contains Python scripts used to generate figures for the manuscri
 - `07_SHAP_comparison.py` — generates Figure 7 comparing SHAP-based feature importance across LightGBM, XGBoost, and Random Forest.
 - `08_s24_dewpoint_depression_SHAP.py` — generates Figure 8 and Supplementary Figure S24, showing the relationship between dewpoint depression and SHAP values for LightGBM and XGBoost, respectively.
 - `s1-s6_monthly_error_distributions.py` — generates Supplementary Figures S1–S6, showing station-level ARE and predicted fog frequency by month for 2019–2024.
+- `s13_spearman_rho_monthly.py` — generates Supplementary Figure S13, showing monthly Spearman’s ρ between observed and predicted fog frequency for LightGBM, XGBoost, and Random Forest.
 
 Figures 1 and 2 use the processed feature dataset archived on Zenodo:
 
 **DOI:** https://doi.org/10.5281/zenodo.22050395
 
-Figures 3–5 and Supplementary Figures S1–S12 use the included model-specific monthly prediction CSV files. These are derived from the corresponding `monthly_all_years.csv` outputs from the model evaluation workflows, with station latitude and longitude added; the underlying prediction and observation values were not modified:
+Figures 3–5 and Supplementary Figures S1–S13 use the included model-specific monthly prediction CSV files. These are derived from the corresponding `monthly_all_years.csv` outputs from the model evaluation workflows, with station latitude and longitude added; the underlying prediction and observation values were not modified:
 
 - LightGBM: `monthly_all_years.csv` → `LightGBM_with_coords.csv`
 - XGBoost: `monthly_all_years.csv` → `XGBoost_with_coords.csv`
