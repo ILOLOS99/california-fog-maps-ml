@@ -4,10 +4,10 @@ This directory contains Python scripts used to generate figures for the manuscri
 
 ## Files
 
-- `01_annual_fog_frequency_asos.py` — generates the map of annual fog frequency at California ASOS stations.
-- `02_hourly_monthly_fog_patterns.py` — generates hourly and monthly fog-frequency patterns for 2019–2024.
-- `03_model_error_boxplots.py` — generates model-performance boxplots using monthly observed and predicted fog frequencies.
-- `04_station_error_maps.py` — generates station-level maps of model errors and predictions for station-months with zero observed fog frequency.
+- `01_annual_fog_frequency_asos.py` — generates Figure 1, showing the the map of annual fog frequency at California ASOS stations.
+- `02_hourly_monthly_fog_patterns.py` — generates Figure 2, showing hourly and monthly fog-frequency patterns for 2019–2024 across California.
+- `03_model_error_boxplots.py` — generates Figure 3, showing model-performance boxplots using monthly observed and predicted fog frequencies.
+- `04_station_error_maps.py` — generates Figure 4, showing station-level maps of model errors and predictions for station-months with zero observed fog frequency.
 - `05_s7-s12_monthly_bias.py` — generates Figure 5 and Supplementary Figures S7–S12, showing monthly prediction residuals for 2019–2024 and their spatial distributions.
 - `07_SHAP_comparison.py` — generates Figure 7 comparing SHAP-based feature importance across LightGBM, XGBoost, and Random Forest.
 - `08_s24_dewpoint_depression_SHAP.py` — generates Figure 8 and Supplementary Figure S24, showing the relationship between dewpoint depression and SHAP values for LightGBM and XGBoost, respectively.
@@ -17,6 +17,7 @@ This directory contains Python scripts used to generate figures for the manuscri
 - `s20_directional_accuracy_map.py` — generates Supplementary Figure S20, showing station- and month-level year-to-year directional accuracy of predicted fog frequency across the three models.
 - `s21_pairwise_dir_agreement_map.py` — generates Supplementary Figure S21, showing station- and month-level pairwise directional agreement between observed and predicted fog frequency across all year pairs.
 - `s22_slope_error_map.py` — generates Supplementary Figure S22, showing station- and month-level errors in predicted fog-frequency trends from 2019–2024 across the three models.
+- `s23_brier_skill_score_map.py` — generates Supplementary Figure S23, mapping 2024 station-level Brier Skill Scores for LightGBM, XGBoost, and Random Forest relative to the diurnal/seasonal climatology baseline.
 
 Figures 1 and 2 use the processed feature dataset archived on Zenodo:
 
@@ -38,3 +39,7 @@ Figure 8 and Supplementary Figure S24 use the included dewpoint-depression SHAP 
 
 - LightGBM: `dewpoint_dep_beeswarm_test.csv` → `LightGBM_dewpoint_dep_beeswarm.csv`
 - XGBoost: `dewpoint_dep_beeswarm_test.csv` → `XGBoost_dewpoint_dep_beeswarm.csv`
+
+Supplementary Figure S23 uses the included `bss_diurnal_clim_2024.csv` file. This file is an unmodified output of the Brier Skill Score analysis in `R/`, which evaluates 2024 model predictions against the diurnal/seasonal climatology baseline:
+
+- `BSS Analysis with Diurnal and Seasonal.R` → `bss_diurnal_clim_2024.csv` 
