@@ -1,0 +1,152 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+import matplotlib.ticker as mticker
+from scipy import stats
+
+# GLOBAL FONT SIZES
+plt.rcParams.update({
+    "font.size":        26,
+    "axes.titlesize":   32,
+    "axes.labelsize":   28,
+    "xtick.labelsize":  22,
+    "ytick.labelsize":  26,
+    "legend.fontsize":  30,
+    "figure.titlesize": 38,
+})
+
+
+test_files = {
+    "LightGBM":      "LightGBM_with_coords.csv",
+    "XGBoost":       "XGBoost_with_coords.csv",
+    "Random Forest": "Random Forest_Fixed Hyperparameters_with_coords.csv",
+}
+
+MODEL_COLORS = {
+    "LightGBM":      "#378ADD",
+    "XGBoost":       "#D85A30",
+    "Random Forest": "#1D9E75",
+}
+MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun",
+                "Jul","Aug","Sep","Oct","Nov","Dec"]
+MONTHS    = list(range(1, 13))
+MODELS    = ["LightGBM", "XGBoost", "Random Forest"]
+MIN_PAIRS = 10
+
+# LOAD
+all_dfs = []
+for model_name in MODELS:
+    df = pd.read_csv(test_files[model_name])
+    df["model"] = model_name
+    all_dfs.append(df)
+
+data  = pd.concat(all_dfs, ignore_index=True)
+years = sorted(data["year_local"].dropna().unique().astype(int))
+print(f"Total rows loaded: {len(data)}")
+print(f"Years: {years}")
+
+# HELPERS
+def spearman_rho(obs, pred):
+    mask = np.isfinite(obs) & np.isfinite(pred)
+    if mask.sum() < MIN_PAIRS:
+        return np.nan
+    rho, _ = stats.spearmanr(obs[mask], pred[mask])
+    return rho
+
+def style_panel(ax):
+    ax.set_facecolor("#FAFAF8")
+    for sp in ax.spines.values():
+        sp.set_linewidth(0.5)
+        sp.set_color("#CCCCCC")
+
+# FIGURE S13
+n_cols = 3
+n_rows = 2
+plot_years = years[:6]
+
+fig1, axes = plt.subplots(
+    n_rows, n_cols,
+    figsize=(34, 20),
+    gridspec_kw={"hspace": 0.45, "wspace": 0.22}
+)
+fig1.patch.set_facecolor("#F7F7F5")
+fig1.suptitle(
+    "Spearman's ρ between observed and predicted fog frequency by month",
+    fontsize=54, fontweight="700", y=1.02, color="#1A1A1A"
+)
+
+for idx, yr in enumerate(plot_years):
+    row, col = divmod(idx, n_cols)
+    ax = axes[row, col]
+    style_panel(ax)
+    for y_val in np.arange(0.0, 1.1, 0.2):
+        ax.axhline(y_val, color="#AAAAAA", linewidth=0.7, linestyle="--", zorder=0)
+
+    yr_data = data[data["year_local"] == yr]
+
+    first_model_data = yr_data[yr_data["model"] == MODELS[0]]
+    n_per_month = []
+    for mo in MONTHS:
+        sub_mo = first_model_data[first_model_data["month_local"] == mo]
+        obs    = sub_mo["obs_freq"].values.astype(float)
+        pred   = sub_mo["pred_freq"].values.astype(float)
+        valid  = int(np.sum(np.isfinite(obs) & np.isfinite(pred)))
+        n_per_month.append(valid)
+
+    for model in MODELS:
+        color = MODEL_COLORS[model]
+        sub_m = yr_data[yr_data["model"] == model]
+        rhos, mos_plot = [], []
+
+        for mo in MONTHS:
+            sub_mo = sub_m[sub_m["month_local"] == mo]
+            obs    = sub_mo["obs_freq"].values.astype(float)
+            pred   = sub_mo["pred_freq"].values.astype(float)
+            rho    = spearman_rho(obs, pred)
+            rhos.append(rho)
+            mos_plot.append(mo)
+
+        rhos = np.array(rhos)
+        ax.plot(mos_plot, rhos,
+                color=color, linewidth=4.0,
+                marker="o", markersize=14,
+                markerfacecolor=color,
+                markeredgewidth=0, alpha=0.88, zorder=4)
+
+    ax.set_xlim(0.5, 12.5)
+    ax.set_ylim(0.0, 1.0)
+    ax.set_yticks(np.arange(0.0, 1.1, 0.2))
+    ax.set_xticks(MONTHS)
+
+    tick_labels = [
+        f"{lbl}\n({n})" for lbl, n in zip(MONTH_LABELS, n_per_month)
+    ]
+    ax.set_xticklabels(tick_labels, fontsize=22, rotation=0, ha="center")
+    ax.tick_params(axis="y", labelsize=32)
+    ax.set_title(str(yr), fontsize=32, fontweight="700", pad=12, color="#1A1A1A")
+
+    if col == 0:
+        ax.set_ylabel("Spearman's ρ", fontsize=36)
+
+model_handles = [
+    mlines.Line2D([], [], color=MODEL_COLORS[m], linewidth=5.0,
+                  marker="o", markersize=16, label=m)
+    for m in MODELS
+]
+fig1.legend(handles=model_handles,
+            loc="lower center", ncol=3, fontsize=32,
+            frameon=False, bbox_to_anchor=(0.5, -0.07))
+
+plt.subplots_adjust(left=0.07, right=0.97, top=0.93, bottom=0.16)
+fig1.savefig(
+    "figure_S13.png",
+    dpi=300,
+    bbox_inches="tight",
+    facecolor=fig1.get_facecolor()
+)
+
+plt.show()
+plt.close()
+
+print("✓ Saved: figure_S13.png")
