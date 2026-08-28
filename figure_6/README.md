@@ -67,5 +67,12 @@ Run the scripts in order:
   
 9. `09_predict_fog_tiles_30m_SLURM.R`
 
-   * Applies the trained LightGBM model across the 30-m grid using 128 (16 x 8) spatial tiles over California, with individual tiles designed to be run as SLURM jobs on an HPC system.
+   * Applies the trained LightGBM model across the 30-m grid using 128 (16 x 8) spatial tiles over California.
+   * Uses `lightgbm_model_final.txt` and `session_summary.rds` from `R/models/lightgbm/`.
+   * Accepts a tile ID (1-128) as a command-line arguement.
+
+10. `10_submit_fog_array_SLURM.sh`
+    * Submits the 128 spatial tiles as a SLURM job array on an HPC system.
+    * Each array task passes its SLURM tile ID to `09_predict_fog_tiles_30m_SLURM.R`.
+    * The supplied configuration uses 8 CPUs, 256 GB memory, and a 24-hour time limit per tile job.
 
