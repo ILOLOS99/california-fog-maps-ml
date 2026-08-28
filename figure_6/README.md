@@ -54,6 +54,6 @@ Run the scripts in order:
    * Generates the distance-to-coast raster aligned to the 30-m terrain grid.
 
 6. `05_deaccumulate_era5.py`
-   *Converts accumulated ERA5-Land flux variables to hourly values for December 2014 and August 2015.
+   * Converts accumulated ERA5-Land flux variables to hourly values for December 2014 and August 2015.
 
 Intermediate and output rasters are written to the working directory. Temporary raster files are written to `terra_tmp/` and do not need to be retained.
