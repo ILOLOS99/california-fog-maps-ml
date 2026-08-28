@@ -1,4 +1,4 @@
-# Figure 6 — 30-m Fog-Frequency Downscaling
+# Figure 6: Fog Frequency Maps for December 2014 and August 2015 at 30-m resolution
 
 This directory contains the workflow used to generate the 30-m fog-frequency maps presented in Figure 6.
 
