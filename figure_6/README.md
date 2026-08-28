@@ -29,7 +29,7 @@ The ERA5-Land inputs are separated into two groups:
 
 The scripts expect the downloaded NetCDF files to follow the directory and filename structure specified in the scripts (e.g., `era5_land_dec_2014_flux_CA_extracted/data_0.nc`).
 
-## Terrain Processing
+## Scripts
 
 Run the scripts in order:
 
@@ -64,4 +64,8 @@ Run the scripts in order:
 8. `08_era5_feature_engineering.py`
     
    * Computes the engineered ERA5-Land predictors and converts timestamps to California local time.
+  
+9. `09_predict_fog_tiles_30m_SLURM.R`
+
+   * Applies the trained LightGBM model across the 30-m grid using 128 (16 x 8) spatial tiles over California, with individual tiles designed to be run as SLURM jobs on an HPC system.
 
