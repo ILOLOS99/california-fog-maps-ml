@@ -9,7 +9,7 @@ tile_id <- as.integer(args[1])
 cat(sprintf("Tile %d starting...\n", tile_id))
 
 # Paths
-model_dir   <- "."
+model_dir <- "../R/models/lightgbm"
 terrain_dir <- "."
 era5_dir    <- "."
 out_dir     <- "."
