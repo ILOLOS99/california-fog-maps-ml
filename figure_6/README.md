@@ -53,7 +53,15 @@ Run the scripts in order:
 
    * Generates the distance-to-coast raster aligned to the 30-m terrain grid.
 
-6. `05_deaccumulate_era5.py`
+6. `06_deaccumulate_era5.py`
+   
    * Converts accumulated ERA5-Land flux variables to hourly values.
 
-Intermediate and output rasters are written to the working directory. Temporary raster files are written to `terra_tmp/` and do not need to be retained.
+7. `07_merge_era5.py`
+   
+   * Merges the atmospheric and de-accumulated flux variables.
+  
+8. `08_era5_feature_engineering.py`
+    
+   * Computes the engineered ERA5-Land predictors and converts timestamps to California local time.
+
