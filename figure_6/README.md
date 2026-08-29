@@ -4,9 +4,9 @@ This directory contains the workflow used to generate the 30-m fog-frequency map
 
 The workflow is computationally intensive and was designed to be run on a high-performance computing (HPC) system / supercomputer.
 
-## Required Input
+## Required Inputs
 
-## DEM
+### DEM
 
 The terrain workflow begins with:
 
@@ -18,7 +18,7 @@ See `R/preprocessing/README.md` for DEM download and preparation instructions.
 
 Place `DEM_CA_30m_albers_clean.tif` in this directory before running the scripts below.
 
-## ERA5-Land
+### ERA5-Land
 
 ERA5-Land hourly data are required for December 2014 and August 2015, with additional January 1, 2015 and September 1, 2015 data used as temporal padding due to the need to convert UTC to local time (-8 h in the winter; -7 h in the summer). Data should cover the whole of California and can be obtained from the Copernicus Climate Data Store (CDS).
 
@@ -69,7 +69,7 @@ Run the scripts in order:
 
    * Applies the trained LightGBM model across the 30-m grid using 128 (16 x 8) spatial tiles over California.
    * Uses `lightgbm_model_final.txt` and `session_summary.rds` from `R/models/lightgbm/`.
-   * Accepts a tile ID (1-128) as a command-line arguement.
+   * Accepts a tile ID (1-128) as a command-line argument.
 
 10. `10_submit_fog_array_SLURM.sh`
     
@@ -77,8 +77,11 @@ Run the scripts in order:
     * Each array task passes its SLURM tile ID to `09_predict_fog_tiles_30m_SLURM.R`.
     * The supplied configuration uses 8 CPUs, 256 GB memory, and a 24-hour time limit per tile job.
    
-12. `11_mosaic_tiles.R`
+11. `11_mosaic_tiles.R`
 
     * Merges the 128 tile fog-frequency rasters into a single statewide raster for each month.
     * Produces `fog_frequency_dec_2014.tif` and `fog_frequency_aug_2015.tif`.
+   
+12. `12_make_figure_6.R`
 
+    * Crops and masks the two statewide fog-frequency rasters to the California boundary and generates the final two-panel Figure 6.
