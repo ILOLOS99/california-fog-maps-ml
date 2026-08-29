@@ -72,7 +72,13 @@ Run the scripts in order:
    * Accepts a tile ID (1-128) as a command-line arguement.
 
 10. `10_submit_fog_array_SLURM.sh`
+    
     * Submits the 128 spatial tiles as a SLURM job array on an HPC system.
     * Each array task passes its SLURM tile ID to `09_predict_fog_tiles_30m_SLURM.R`.
     * The supplied configuration uses 8 CPUs, 256 GB memory, and a 24-hour time limit per tile job.
+   
+12. `11_mosaic_tiles.R`
+
+    * Merges the 128 tile fog-frequency rasters into a single statewide raster for each month.
+    * Produces `fog_frequency_dec_2014.tif` and `fog_frequency_aug_2015.tif`.
 
