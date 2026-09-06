@@ -11,7 +11,8 @@ This directory contains the code and supporting files used to evaluate the Rando
 
 The full hourly test-set prediction files used by the evaluation script are archived on Zenodo because of their file size:
 
-**DOI:** https://doi.org/10.5281/zenodo.22018553
+[**DOI:** https://doi.org/10.5281/zenodo.22018553
+](https://zenodo.org/records/22018553?preview=1&token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjMxNTI0N2ZlLWZkMWYtNGM4NC05ZTEyLWEzNjNiZDUxNWJjYyIsImRhdGEiOnt9LCJyYW5kb20iOiIzYjQyNTdiODIwZGYwNTliNzk4MDdjY2RlNDllOThiNSJ9.wItPR38ZZP9hafL7hKm3naWrOMBdgC_ew7-SMS6IfvI1PT9_3jS6W7KNmzjLHwgW4axQm0RJSLzBQ34dx_mj7w)
 
 Download the three prediction files from the Zenodo archive and place them in the locations specified in `01_bss_diurnal_seasonal.R` before running the evaluation.
 
