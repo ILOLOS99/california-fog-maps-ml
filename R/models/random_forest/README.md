@@ -12,7 +12,8 @@ The model predicts hourly fog (including mist) occurrence probabilities, which a
 
 The trained model (`rf_model_final.rds`) is archived on Zenodo because of its file size:
 
-**DOI:** https://doi.org/10.5281/zenodo.22016730
+[https://doi.org/10.5281/zenodo.22016730
+](https://zenodo.org/records/22016730?preview=1&token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjM1NDg0MDBjLTE5MTItNDI0ZC05MjE2LTIxZWYwZGY2MmJiOCIsImRhdGEiOnt9LCJyYW5kb20iOiIzYjI3YTg1MzVlNTFkZWM2YmMwNDExNTk2ZGI3Njk5OCJ9.wszv3puZuAWd_HjkMnYUsFILJapzOrC_p1NuUOmOf2REZ8SVw8G1RXv0Nr2LARDtgHyVy5se-InQPf_iChEt4Q)
 
 ## Model Training
 
